@@ -4,7 +4,7 @@
 #include "sqlconnpool.h"
 
 /**
- * @brief ×ÊÔ´ÔÚ¶ÔÏó¹¹ÔìÊ±³õÊ¼»¯£¬ÔÚÎö¹¹Ê±ÊÍ·Å
+ * @brief èµ„æºåœ¨å¯¹è±¡æž„é€ æ—¶åˆå§‹åŒ–ï¼Œåœ¨æžæž„æ—¶é‡Šæ”¾
  *
  */
 class SqlConnRAII
@@ -21,7 +21,7 @@ public:
 SqlConnRAII::SqlConnRAII(MYSQL **sql, SqlConnPool *connpool)
 {
     assert(sql);
-    // µÃµ½Ò»¸ö¿ÕÏÐsqlÁ¬½Ó
+    // å¾—åˆ°ä¸€ä¸ªç©ºé—²sqlè¿žæŽ¥
     *sql = connpool->GetConn();
     sql_ = *sql;
     connpool_ = connpool;
@@ -31,7 +31,7 @@ SqlConnRAII::~SqlConnRAII()
 {
     if (sql_)
     {
-        // ÊÍ·ÅsqlÁ¬½Ó¼°ÆäÐÅºÅÁ¿
+        // é‡Šæ”¾sqlè¿žæŽ¥åŠå…¶ä¿¡å·é‡
         connpool_->FreeConn(sql_);
     }
 }
