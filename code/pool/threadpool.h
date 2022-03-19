@@ -39,6 +39,7 @@ public:
         assert(threadCount > 0);
         for (size_t i = 0; i < threadCount; i++)
         {
+            // [pool]是里面lambda函数的参数
             std::thread([pool = pool_]
                         { std::unique_lock<std::mutex> locker(pool->mtx);
                         while(true)
