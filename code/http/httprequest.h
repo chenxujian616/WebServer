@@ -40,8 +40,13 @@ public:
 private:
     // 有点像是用于发送HTTP请求
     bool ParseRequestLine_(const std::string &line);
+<<<<<<< HEAD
     void ParseHeader_(const std::string &line);
     void ParseBody_(const std::string &line);
+=======
+    bool ParseHeader_(const std::string &line);
+    bool ParseBody_(const std::string &line);
+>>>>>>> 35de4ad5ed120d8c91c2debf99eb26ae559d72f0
 
     void ParsePath_(void);
     void ParsePost_(void);
