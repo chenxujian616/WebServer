@@ -60,8 +60,8 @@ public:
     void Append(const void *data, size_t len);
     void Append(const Buffer &buff);
 
-    ssize_t ReadFd(int fd, int *errno);
-    ssize_t WriteFd(int fd, int *errno);
+    ssize_t ReadFd(int fd, int *saveErrno);
+    ssize_t WriteFd(int fd, int *saveErrno);
 };
 
 #endif
