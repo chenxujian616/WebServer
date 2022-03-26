@@ -16,8 +16,10 @@
 class Buffer
 {
 private:
+    // Buffer缓存区起始地址
     char *BeginPtr_(void);
     const char *BeginPtr_(void) const;
+    // 若Buffer需要写入内容超过空间大小，则扩充Buffer空间
     void MakeSpace_(size_t len);
 
     std::vector<char> buffer_;
@@ -31,13 +33,14 @@ public:
 
     /*
         prependable为预留空间
-        readable为剩余读取空间
-        writable为写入剩余空间
+        readable为内容读取空间
+        writable为内容写入剩余空间
      */
     size_t WritableBytes(void) const;
     size_t ReadableBytes(void) const;
     size_t PrependableBytes(void) const;
 
+    // Peek为readable内容读取空间起始地址
     const char *Peek(void) const;
     void EnsureWritable(size_t len);
     void HasWritten(size_t len);

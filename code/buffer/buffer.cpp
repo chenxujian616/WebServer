@@ -60,6 +60,7 @@ char *Buffer::BeginWrite(void)
     return BeginPtr_() + writePos_;
 }
 
+// 新增的写入长度，即可读空间readable增大
 void Buffer::HasWritten(size_t len)
 {
     writePos_ += len;
@@ -106,7 +107,7 @@ const char *Buffer::BeginPtr_(void) const
     return &*buffer_.begin();
 }
 
-// ??
+// 扩充Buffer空间
 void Buffer::MakeSpace_(size_t len)
 {
     if (WritableBytes() + PrependableBytes() < len)
