@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
-// 正则表达式头文件
+// 姝ｅ垯琛ㄨ揪寮忓ご鏂囦欢
 #include <regex>
 #include <errno.h>
 #include <mysql/mysql.h>
@@ -38,7 +38,7 @@ public:
     };
 
 private:
-    // 有点像是用于发送HTTP请求
+    // 鏈夌偣鍍忔槸鐢ㄤ簬鍙戦�丠TTP璇锋眰
     bool ParseRequestLine_(const std::string &line);
     void ParseHeader_(const std::string &line);
     void ParseBody_(const std::string &line);
