@@ -137,6 +137,7 @@ void Buffer::MakeSpace_(size_t len)
     }
 }
 
+// readv函数是从文件描述符中读取数据，存到buffer中
 ssize_t Buffer::ReadFd(int fd, int *saveErrno)
 {
     char buff[65535];
