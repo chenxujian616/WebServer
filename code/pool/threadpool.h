@@ -25,6 +25,7 @@ private:
     struct Pool
     {
         std::mutex mtx;
+        // 并法，条件变量
         std::condition_variable cond;
         bool isClosed;
         // std::function是函数包装器，也是一个模板类
@@ -39,7 +40,7 @@ public:
         assert(threadCount > 0);
         for (size_t i = 0; i < threadCount; i++)
         {
-            // [pool]是里面lambda函数的参数
+            // [pool]是里面lambda函数的参数，std::thread是以函数指针为参数
             std::thread([pool = pool_]
                         { std::unique_lock<std::mutex> locker(pool->mtx);
                         while(true)
