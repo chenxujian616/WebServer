@@ -60,7 +60,7 @@ private:
 
 public:
     HttpRequest(/* args */);
-    ~HttpRequest();
+    ~HttpRequest() = default;
 
     void Init(void);
     bool parse(Buffer &buff);
