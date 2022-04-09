@@ -67,27 +67,28 @@ public:
     }
     ThreadPool() = default;
     ThreadPool(ThreadPool &&) = default;
-    ~ThreadPool();
+    ~ThreadPool()
+    {
+        if (static_cast<bool>(pool_))
+        {
+            std::lock_guard<std::mutex> locker(pool_->mtx);
+            pool_->isClosed = true;
+        }
+        pool_->cond.notify_all();
+    }
 
+    // 这里并不是引用的引用，而是一个引用折叠(C++没有引用的引用)
+    // 引用折叠后依然是一个普通的引用或右值引用，不存在所谓的“引用的引用”
+    // 引用折叠只是为了std::move、std::forward等函数服务
     template <class F>
     void AddTask(F &&task)
     {
         {
             std::lock_guard<std::mutex> locker(pool_->mtx);
-            pool_->tasks.emplace(std::forward<F> task);
+            pool_->tasks.emplace(std::forward<F>(task));
         }
         pool_->cond.notify_one();
     }
 };
-
-ThreadPool::~ThreadPool()
-{
-    if (static_cast<bool>(pool_))
-    {
-        std::lock_guard<std::mutex> locker(pool_->mtx);
-        pool_->isClosed = true;
-    }
-    pool_->cond.notify_all();
-}
 
 #endif
