@@ -116,11 +116,60 @@ void Log::write(int level, const char *format, ...)
     va_list vaList;
 
     /* 日志日期 日志行数 */
-    if (toDay_ != t.tm_mday || (lineCount_ && (lineCount_ & MAX_LINES == 0)))
+    if (toDay_ != t.tm_mday || (lineCount_ && (lineCount_ % MAX_LINES == 0)))
     {
         unique_lock<mutex> locker(mtx_);
         // 解锁
         locker.unlock();
+
+        char newFile[LOG_NAME_LEN];
+        char tail[36] = {0};
+        snprintf(tail, 36, "%04d_%02d_%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
+
+        if (toDay_ != t.tm_mday)
+        {
+            snprintf(newFile, LOG_NAME_LEN - 72, "%s/%s%s", path_, tail, suffix_);
+            toDay_ = t.tm_mday;
+            lineCount_ = 0;
+        }
+        else
+        {
+            snprintf(newFile, LOG_NAME_LEN - 72, "%s/%s-%d%s", path_, tail, (lineCount_ / MAX_LINES), suffix_);
+        }
+
+        locker.lock();
+        flush();
+        fclose(fp_);
+        fp_ = fopen(newFile, "a");
+        assert(fp_ != nullptr);
+    }
+
+    {
+        unique_lock<mutex> locker(mtx_);
+        lineCount_++;
+
+        int n = snprintf(buff_.BeginWrite(), 128, "%d-%02d-%02d %02d:%02d:%02d.%06ld ",
+                         t.tm_year + 1900, t.tm_mon + 1, t.tm_mday,
+                         t.tm_hour, t.tm_min, t.tm_sec, now.tv_usec);
+        buff_.HasWritten(n);
+        AppendLogLevelTitle_(level);
+
+        va_start(vaList, format);
+        int m = vsnprintf(buff_.BeginWrite(), buff_.WritableBytes(), format, vaList);
+        va_end(vaList);
+
+        buff_.HasWritten(m);
+        buff_.Append("\n\0", 2);
+
+        if (isAsync_ && deque_ && !deque_->full())
+        {
+            deque_->push_back(buff_.RetrieveAllToStr());
+        }
+        else
+        {
+            fputs(buff_.Peek(), fp_);
+        }
+        buff_.RetrieveAll();
     }
 }
 
@@ -145,4 +194,34 @@ void Log::AppendLogLevelTitle_(int level)
         buff_.Append("[info]:", 9);
         break;
     }
+}
+
+void Log::flush(void)
+{
+    if (isAsync_)
+    {
+        deque_->flush();
+    }
+    fflush(fp_);
+}
+
+void Log::AsyncWrite_(void)
+{
+    string str = "";
+    while (deque_->pop(str))
+    {
+        lock_guard<mutex> locker(mtx_);
+        fputs(str.c_str(), fp_);
+    }
+}
+
+Log *Log::Instance(void)
+{
+    static Log inst;
+    return &inst;
+}
+
+void Log::FlushLogThread(void)
+{
+    Log::Instance()->AsyncWrite_();
 }
