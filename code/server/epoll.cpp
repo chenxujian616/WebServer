@@ -50,7 +50,7 @@ bool Epoller::DelFd(int fd)
 }
 
 // 等待文件描述符
-int Epoller::Wait(int timeoutMs = -1)
+int Epoller::Wait(int timeoutMs)
 {
     return epoll_wait(epollFd_, &events_[0], static_cast<int>(events_.size()), timeoutMs);
 }
