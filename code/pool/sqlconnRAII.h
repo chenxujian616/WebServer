@@ -22,26 +22,22 @@ private:
     SqlConnPool *connpool_;
 
 public:
-    SqlConnRAII(MYSQL **sql, SqlConnPool *connpool);
-    ~SqlConnRAII();
-};
-
-SqlConnRAII::SqlConnRAII(MYSQL **sql, SqlConnPool *connpool)
-{
-    assert(sql);
-    // 得到一个空闲sql连接
-    *sql = connpool->GetConn();
-    sql_ = *sql;
-    connpool_ = connpool;
-}
-
-SqlConnRAII::~SqlConnRAII()
-{
-    if (sql_)
+    SqlConnRAII(MYSQL **sql, SqlConnPool *connpool)
     {
-        // 释放sql连接及其信号量
-        connpool_->FreeConn(sql_);
+        assert(sql);
+        // 得到一个空闲sql连接
+        *sql = connpool->GetConn();
+        sql_ = *sql;
+        connpool_ = connpool;
     }
-}
+    ~SqlConnRAII()
+    {
+        if (sql_)
+        {
+            // 释放sql连接及其信号量
+            connpool_->FreeConn(sql_);
+        }
+    }
+};
 
 #endif
