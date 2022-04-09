@@ -5,8 +5,11 @@ const char *HttpConn::srcDir;
 atomic<int> HttpConn::userCount;
 bool HttpConn::isET;
 
-HttpConn::HttpConn(/* args */) : fd_(-1), addr_({0}), isClose_(true)
+HttpConn::HttpConn(/* args */)
 {
+    fd_ = -1;
+    addr_ = {0};
+    isClose_ = true;
 }
 
 HttpConn::~HttpConn()
