@@ -50,7 +50,7 @@ HttpResponse::~HttpResponse()
 }
 
 void HttpResponse::Init(const std::string &srcDir, std::string &path,
-                        bool isKeepAlive = false, int code = -1)
+                        bool isKeepAlive, int code)
 {
     assert(srcDir != "");
     if (mmFile_)
