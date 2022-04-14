@@ -8,16 +8,19 @@ WebServer::WebServer(int port, int trigMode, int timeoutMS, bool OptLinger, int 
     openLinger_ = OptLinger;
     timeoutMS_ = timeoutMS;
     isClose_ = false;
+    // 时间堆定时器智能指针，这是一个小顶堆数据结构
     timer_ = std::unique_ptr<HeapTimer>(new HeapTimer());
     threadpool_ = std::unique_ptr<ThreadPool>(new ThreadPool(threadNum));
     epoller_ = std::unique_ptr<Epoller>(new Epoller());
 
+    // getcwd获得当前终端的路径
     srcDir_ = getcwd(nullptr, 256);
     assert(srcDir_);
     // 将resources挂到字符串尾
     strncat(srcDir_, "/resources/", 16);
     HttpConn::userCount = 0;
     HttpConn::srcDir = srcDir_;
+    // 连接本地MySQL
     SqlConnPool::Instance()->Init("localhost", sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
 
     InitEventMode_(trigMode);
@@ -302,7 +305,7 @@ bool WebServer::InitSocket_(void)
     int optval = 1;
     // 端口复用
     ret = setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval, sizeof(int));
-    if (ret = -1)
+    if (ret == -1)
     {
         LOG_ERROR("set socket setsockopt error!");
         close(listenFd_);
