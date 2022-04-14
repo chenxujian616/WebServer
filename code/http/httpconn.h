@@ -73,8 +73,11 @@ public:
         return request_.IsKeepAlive();
     }
 
+    // ET模式？
     static bool isET;
+    // resources目录
     static const char *srcDir;
+    // 用户数量
     static std::atomic<int> userCount;
 };
 
