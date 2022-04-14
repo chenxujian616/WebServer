@@ -18,6 +18,10 @@ typedef std::chrono::high_resolution_clock Clock;
 typedef std::chrono::milliseconds MS;
 typedef Clock::time_point TimeStamp;
 
+/**
+ * @brief 定时器节点结构体，expires为定时器的失效时间戳，cb为回调函数
+ * 
+ */
 struct TimerNode
 {
     int id;
@@ -43,6 +47,7 @@ private:
     void SwapNode_(size_t i, size_t j);
 
     std::vector<TimerNode> heap_;
+    // ref_存储了小根堆中所有节点的id及其在vector中的索引
     std::unordered_map<int, size_t> ref_;
 
 public:

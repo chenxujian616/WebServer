@@ -2,6 +2,7 @@
 
 HeapTimer::HeapTimer(/* args */)
 {
+    // 分配64个sizeof(TimerNode)的空间给vector
     heap_.reserve(64);
 }
 
@@ -12,12 +13,13 @@ HeapTimer::~HeapTimer()
 
 void HeapTimer::siftup_(size_t i)
 {
-    // 大顶堆排序
+    // 小根堆节点上移方法
     assert(i >= 0 && i < heap_.size());
     // j是节点i的父节点
     size_t j = (i - 1) / 2;
     while (j >= 0)
     {
+        // <生效是因为在struct做了重载
         if (heap_[j] < heap_[i])
         {
             break;
@@ -28,6 +30,12 @@ void HeapTimer::siftup_(size_t i)
     }
 }
 
+/**
+ * @brief 交换堆节点方法
+ * 
+ * @param i 子节点
+ * @param j 父节点
+ */
 void HeapTimer::SwapNode_(size_t i, size_t j)
 {
     assert(i >= 0 && i < heap_.size());
@@ -37,9 +45,17 @@ void HeapTimer::SwapNode_(size_t i, size_t j)
     ref_[heap_[j].id] = j;
 }
 
+/**
+ * @brief 小根堆节点下移方法
+ * 
+ * @param index 需要调整的节点索引
+ * @param n 小根堆的size，即最后一个元素，不参与堆节点调整
+ * @return true 调整后的i比调整前的i大，返回true
+ * @return false 调整后的i比调整前的i小，返回false，然后上移调整后的节点
+ */
 bool HeapTimer::siftdown_(size_t index, size_t n)
 {
-    // 小顶堆排序
+    // 小顶堆排序，下移
     assert(index >= 0 && index < heap_.size());
     assert(n >= 0 && n <= heap_.size());
 
@@ -64,6 +80,13 @@ bool HeapTimer::siftdown_(size_t index, size_t n)
     return i > index;
 }
 
+/**
+ * @brief 添加新节点到小根堆中
+ * 
+ * @param id 
+ * @param timeOut 
+ * @param cb 
+ */
 void HeapTimer::add(int id, int timeOut, const TimeoutCallback &cb)
 {
     assert(id >= 0);
@@ -81,6 +104,7 @@ void HeapTimer::add(int id, int timeOut, const TimeoutCallback &cb)
     else
     {
         i = ref_[id];
+        // 修改已有节点的到期时间和回调函数
         heap_[i].expires = Clock::now() + MS(timeOut);
         heap_[i].cb = cb;
         if (!siftdown_(i, heap_.size()))
@@ -130,6 +154,7 @@ void HeapTimer::adjust(int id, int newExpires)
     // 调整指定id的节点
     assert(!heap_.empty() && ref_.count(id) > 0);
     heap_[ref_[id]].expires = Clock::now() + MS(newExpires);
+    // 修改新的到期时间后，新时间必然大于旧时间，故要把当前id的节点下移
     siftdown_(ref_[id], heap_.size());
 }
 
@@ -152,6 +177,10 @@ void HeapTimer::tick(void)
     }
 }
 
+/**
+ * @brief 清除到期节点，这个节点必然是小顶堆的根节点，故索引为0
+ * 
+ */
 void HeapTimer::pop(void)
 {
     assert(!heap_.empty());
