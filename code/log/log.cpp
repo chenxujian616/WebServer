@@ -56,14 +56,14 @@ void Log::init(int level, const char *path,
         isAsync_ = true;
         if (!deque_)
         {
-            deque_ = unique_ptr<BlockDeque<string>>(new BlockDeque<string>);
-            writeThread_ = unique_ptr<thread>(new thread(Log::FlushLogThread));
+            // deque_ = unique_ptr<BlockDeque<string>>(new BlockDeque<string>);
+            // writeThread_ = unique_ptr<thread>(new thread(Log::FlushLogThread));
 
-            /* unique_ptr<BlockDeque<string>> newDeque(new BlockDeque<string>);
+            unique_ptr<BlockDeque<string>> newDeque(new BlockDeque<string>);
             deque_ = move(newDeque);
 
             unique_ptr<thread> newThread(new thread(Log::FlushLogThread));
-            writeThread_ = move(newThread); */
+            writeThread_ = move(newThread);
         }
     }
     else
