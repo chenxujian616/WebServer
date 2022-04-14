@@ -1,2 +1,5 @@
 .vscode
 resources
+build/log
+bin
+log
