@@ -27,6 +27,9 @@ void SqlConnPool::Init(const char *host, int port, const char *user, const char 
     for (int i = 0; i < connSize; i++)
     {
         MYSQL *sql = nullptr;
+        // mysql初始化函数，用来初始化一个MySQL对象
+        // 若传入的参数为NULL，这个函数会自动分配一个MySQL对象
+        // 当调用mysql_close时，会释放这个对象
         sql = mysql_init(sql);
         if (!sql)
         {
@@ -43,9 +46,15 @@ void SqlConnPool::Init(const char *host, int port, const char *user, const char 
         connQue_.push(sql);
     }
     MAX_CONN_ = connSize;
+    // 信号量，数量等于MySQL的最大连接数
     sem_init(&semId_, 0, MAX_CONN_);
 }
 
+/**
+ * @brief 获取SQL连接，获取后，SQL连接池数量-1
+ *
+ * @return MYSQL*
+ */
 MYSQL *SqlConnPool::GetConn(void)
 {
     MYSQL *sql = nullptr;
@@ -64,6 +73,11 @@ MYSQL *SqlConnPool::GetConn(void)
     return sql;
 }
 
+/**
+ * @brief 释放SQL连接
+ *
+ * @param conn SQL连接
+ */
 void SqlConnPool::FreeConn(MYSQL *conn)
 {
     // 断言检查
@@ -86,6 +100,11 @@ void SqlConnPool::ClosePool(void)
     mysql_library_end();
 }
 
+/**
+ * @brief 获取空间的SQL连接数量
+ *
+ * @return int 剩余空闲SQL连接数量
+ */
 int SqlConnPool::GetFreeConnCount(void)
 {
     lock_guard<mutex> locker(mtx_);
