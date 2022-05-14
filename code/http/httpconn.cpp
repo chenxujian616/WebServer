@@ -49,6 +49,7 @@ int HttpConn::GetFd(void) const
 
 const char *HttpConn::GetIP(void) const
 {
+    // 将IP从主机转换为点分十进制的字符串形式
     return inet_ntoa(addr_.sin_addr);
 }
 
