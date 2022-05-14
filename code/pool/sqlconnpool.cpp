@@ -8,6 +8,7 @@ SqlConnPool::SqlConnPool(/* args */)
     freeCount_ = 0;
 }
 
+// RAII机制销毁连接池
 SqlConnPool::~SqlConnPool()
 {
     ClosePool();
@@ -47,6 +48,7 @@ void SqlConnPool::Init(const char *host, int port, const char *user, const char 
     }
     MAX_CONN_ = connSize;
     // 信号量，数量等于MySQL的最大连接数
+    // 使用信号量实现多线程争夺连接的同步机制
     sem_init(&semId_, 0, MAX_CONN_);
 }
 
