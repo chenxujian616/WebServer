@@ -167,6 +167,7 @@ void HttpResponse::UnmapFile(void)
 {
     if (mmFile_)
     {
+        // munmap用于释放由mmap创建的内存空间
         munmap(mmFile_, mmFileStat_.st_size);
         mmFile_ = nullptr;
     }
