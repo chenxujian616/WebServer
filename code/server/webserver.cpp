@@ -10,6 +10,7 @@ WebServer::WebServer(int port, int trigMode, int timeoutMS, bool OptLinger, int 
     isClose_ = false;
     // 时间堆定时器智能指针，这是一个小顶堆数据结构
     timer_ = std::unique_ptr<HeapTimer>(new HeapTimer());
+    // 线程池
     threadpool_ = std::unique_ptr<ThreadPool>(new ThreadPool(threadNum));
     epoller_ = std::unique_ptr<Epoller>(new Epoller());
 
@@ -29,6 +30,7 @@ WebServer::WebServer(int port, int trigMode, int timeoutMS, bool OptLinger, int 
         isClose_ = true;
     }
 
+    // 输出log日志
     if (openLog)
     {
         Log::Instance()->init(logLevel, "./log", ".log", logQueSize);
@@ -54,16 +56,20 @@ WebServer::WebServer(int port, int trigMode, int timeoutMS, bool OptLinger, int 
 
 WebServer::~WebServer()
 {
+    // 关闭监听文件描述符
     close(listenFd_);
     isClose_ = true;
+    // 释放srcDir_空间
     free(srcDir_);
+    // 关闭SQL连接
     SqlConnPool::Instance()->ClosePool();
 }
 
 void WebServer::InitEventMode_(int trigMode)
 {
-    // EPOLLRDHUP事件
+    // 监听线程EPOLLRDHUP事件
     listenEvent_ = EPOLLRDHUP;
+    // 连接线程是EPOLLONESHOT|EPOLLRDHUP事件
     connEvent_ = EPOLLONESHOT | EPOLLRDHUP;
     switch (trigMode)
     {
@@ -76,6 +82,7 @@ void WebServer::InitEventMode_(int trigMode)
         listenEvent_ |= EPOLLET;
         break;
     case 3:
+        // 将监听线程和连接线程的工作模式都设为ET边缘触发模式
         listenEvent_ |= EPOLLET;
         connEvent_ |= EPOLLET;
         break;
@@ -146,6 +153,11 @@ void WebServer::SendError_(int fd, const char *info)
     close(fd);
 }
 
+/**
+ * @brief 关闭HTTP连接，在epoll中删除该连接的文件描述符
+ *
+ * @param client HTTP连接
+ */
 void WebServer::CloseConn_(HttpConn *client)
 {
     assert(client);
@@ -164,6 +176,7 @@ void WebServer::AddClient_(int fd, sockaddr_in addr)
         timer_->add(fd, timeoutMS_, std::bind(&WebServer::CloseConn_, this, &users_[fd]));
     }
     epoller_->AddFd(fd, EPOLLIN | connEvent_);
+    // 每一个新的连接都要设为非阻塞模式
     SetFdNonblock(fd);
     LOG_INFO("Client[%d] in!", users_[fd].GetFd());
 }
@@ -287,6 +300,7 @@ bool WebServer::InitSocket_(void)
         optLinger.l_linger = 1;
     }
 
+    // 得到监听客户端连接的文件描述符
     listenFd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (listenFd_ < 0)
     {
@@ -294,6 +308,7 @@ bool WebServer::InitSocket_(void)
         return false;
     }
 
+    // 设置监听文件描述符，避免监听描述符阻塞
     ret = setsockopt(listenFd_, SOL_SOCKET, SO_LINGER, &optLinger, sizeof(optLinger));
     if (ret < 0)
     {
@@ -303,7 +318,7 @@ bool WebServer::InitSocket_(void)
     }
 
     int optval = 1;
-    // 端口复用
+    // 端口复用(一般情况下都是一对一，但服务器需要一对多，所以要设SO_REUSEADDR)
     ret = setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval, sizeof(int));
     if (ret == -1)
     {
