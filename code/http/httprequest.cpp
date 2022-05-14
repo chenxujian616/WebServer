@@ -6,6 +6,10 @@ HttpRequest::HttpRequest(/* args */)
     Init();
 }
 
+/**
+ * @brief 默认HTML页面后缀
+ *
+ */
 const unordered_set<std::string> HttpRequest::DEFAULT_HTML{
     "/index",
     "/register",
@@ -23,6 +27,7 @@ const unordered_map<std::string, int> HttpRequest::DEFAULT_HTML_TAG{
 void HttpRequest::Init(void)
 {
     method_ = path_ = version_ = body_ = "";
+    // 默认是请求行状态
     state_ = REQUEST_LINE;
     header_.clear();
     post_.clear();
@@ -44,7 +49,7 @@ bool HttpRequest::parse(Buffer &buff)
     {
         return false;
     }
-    // 从缓存空间中
+    // 从缓存空间中获取数据内容
     while (buff.ReadableBytes() && state_ != FINISH)
     {
         // 寻找\r\n的地址，并把地址赋值给缓存区中
@@ -110,6 +115,7 @@ bool HttpRequest::ParseRequestLine_(const string &line)
     smatch subMatch;
     if (regex_match(line, subMatch, patten))
     {
+        // 得到头部、URL和HTTP版本号，并把状态更改为headers状态
         method_ = subMatch[1];
         path_ = subMatch[2];
         version_ = subMatch[3];

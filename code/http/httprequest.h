@@ -14,6 +14,10 @@
 #include "../pool/sqlconnpool.h"
 #include "../pool/sqlconnRAII.h"
 
+/**
+ * @brief 这个类用于处理HTTP请求，并不是说服务器发送一个HTTP请求到另一个服务器
+ *
+ */
 class HttpRequest
 {
 public:
@@ -49,6 +53,7 @@ private:
 
     static bool UserVerify(const std::string &name, const std::string &pwd, bool isLogin);
 
+    // 用一个状态机来表示HTTP的状态？
     PARSE_STATE state_;
     std::string method_, path_, version_, body_;
     std::unordered_map<std::string, std::string> header_;
