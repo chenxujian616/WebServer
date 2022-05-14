@@ -9,6 +9,7 @@ Epoller::Epoller(int maxEvent) : epollFd_(epoll_create(512)), events_(maxEvent)
 Epoller::~Epoller()
 {
     // 使用完epoll后，必须调用close关闭，否则导致文件描述符fd被耗尽
+    // 这个epollfd_会占用一个文件描述符
     close(epollFd_);
 }
 
@@ -26,6 +27,14 @@ bool Epoller::AddFd(int fd, uint32_t events)
     return 0 == epoll_ctl(epollFd_, EPOLL_CTL_ADD, fd, &ev);
 }
 
+/**
+ * @brief 调整文件描述符的epoll属性
+ *
+ * @param fd 文件描述符
+ * @param events epoll事件
+ * @return true
+ * @return false
+ */
 bool Epoller::ModFd(int fd, uint32_t events)
 {
     if (fd < 0)
@@ -38,6 +47,13 @@ bool Epoller::ModFd(int fd, uint32_t events)
     return 0 == epoll_ctl(epollFd_, EPOLL_CTL_MOD, fd, &ev);
 }
 
+/**
+ * @brief 删除监听的文件描述符
+ *
+ * @param fd 文件描述符
+ * @return true
+ * @return false
+ */
 bool Epoller::DelFd(int fd)
 {
     if (fd < 0)
