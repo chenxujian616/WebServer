@@ -7,7 +7,7 @@ HttpRequest::HttpRequest(/* args */)
 }
 
 /**
- * @brief 默认HTML页面后缀
+ * @brief HTML页面后缀，默认是/welcome（严格说并不是后缀，而是资源所在的路由）
  *
  */
 const unordered_set<std::string> HttpRequest::DEFAULT_HTML{
@@ -33,6 +33,12 @@ void HttpRequest::Init(void)
     post_.clear();
 }
 
+/**
+ * @brief 检查keepalive状态
+ *
+ * @return true
+ * @return false
+ */
 bool HttpRequest::IsKeepAlive(void) const
 {
     if (header_.count("Connection") == 1)
@@ -45,6 +51,7 @@ bool HttpRequest::IsKeepAlive(void) const
 bool HttpRequest::parse(Buffer &buff)
 {
     const char CRLF[] = "\r\n";
+    // 请求报文空
     if (buff.ReadableBytes() <= 0)
     {
         return false;
@@ -54,6 +61,7 @@ bool HttpRequest::parse(Buffer &buff)
     {
         // 寻找\r\n的地址，并把地址赋值给缓存区中
         const char *lineEnd = search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
+        // line是从每一行首项元素开始到\r\n的字符串
         string line(buff.Peek(), lineEnd);
         switch (state_)
         {
@@ -68,6 +76,7 @@ bool HttpRequest::parse(Buffer &buff)
             ParseHeader_(line);
             if (buff.ReadableBytes() <= 2)
             {
+                // 请求体没有内容，只有\r\n
                 state_ = FINISH;
             }
             break;
@@ -90,7 +99,7 @@ bool HttpRequest::parse(Buffer &buff)
 
 void HttpRequest::ParsePath_(void)
 {
-    // 添加后缀
+    // 添加后缀，默认资源是/index.html
     if (path_ == "/")
     {
         path_ = "/index.html";
@@ -116,6 +125,7 @@ bool HttpRequest::ParseRequestLine_(const string &line)
     if (regex_match(line, subMatch, patten))
     {
         // 得到头部、URL和HTTP版本号，并把状态更改为headers状态
+        // subMatch[0]是line
         method_ = subMatch[1];
         path_ = subMatch[2];
         version_ = subMatch[3];
@@ -132,6 +142,7 @@ void HttpRequest::ParseHeader_(const string &line)
     smatch subMatch;
     if (regex_match(line, subMatch, patten))
     {
+        // subMatch[1]的key，subMatch[2]是value
         header_[subMatch[1]] = subMatch[2];
     }
     else
@@ -143,6 +154,8 @@ void HttpRequest::ParseHeader_(const string &line)
 void HttpRequest::ParseBody_(const string &line)
 {
     body_ = line;
+    std::cout << line << std::endl;
+    // 获取请求体内容
     ParsePost_();
     state_ = FINISH;
     LOG_DEBUG("Body:%s, len:%d", line.c_str(), line.size());
@@ -164,8 +177,7 @@ int HttpRequest::ConvertHex(char ch)
 
 void HttpRequest::ParsePost_(void)
 {
-    // 这里是用POST方法发送用户名和密码来登入mysql数据库？
-    // 所以是用HTTP方式登录数据库？
+    // 不是说用POST方法连接数据库，而是浏览器用POST方法发送用户名和密码，服务器做匹配
     if (method_ == "POST" && header_["Content-Type"] == "application/x-www-form-urlencoded")
     {
         ParseFromUrlencoded_();
@@ -175,6 +187,7 @@ void HttpRequest::ParsePost_(void)
             LOG_DEBUG("Tag:%d", tag);
             if (tag == 0 || tag == 1)
             {
+                // tag=1表示登录
                 bool isLogin = (tag == 1);
                 if (UserVerify(post_["username"], post_["password"], isLogin))
                 {
@@ -192,6 +205,8 @@ void HttpRequest::ParsePost_(void)
 /*
     编码目的在于让程序能够处理URL中的特殊符号
     https://www.jianshu.com/p/7aa8821c29c1
+
+    第二个功能是从请求体内容中分离POST请求内容
  */
 void HttpRequest::ParseFromUrlencoded_(void)
 {

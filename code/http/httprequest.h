@@ -21,6 +21,7 @@
 class HttpRequest
 {
 public:
+    // 请求报文状态，分别是请求行、请求头、请求体
     enum PARSE_STATE
     {
         REQUEST_LINE,
@@ -42,9 +43,26 @@ public:
     };
 
 private:
-    // 有点像是用于发送HTTP请求
+    // 以下方法，都是用于处理HTTP请求报文
+    /**
+     * @brief 处理、解析请求行
+     *
+     * @param line 请求报文
+     * @return true 请求行处理解析成功
+     * @return false 请求行处理解析失败
+     */
     bool ParseRequestLine_(const std::string &line);
+    /**
+     * @brief 处理、解析请求头
+     *
+     * @param line 请求报文
+     */
     void ParseHeader_(const std::string &line);
+    /**
+     * @brief 处理、解析请求体
+     *
+     * @param line 请求报文
+     */
     void ParseBody_(const std::string &line);
 
     void ParsePath_(void);
