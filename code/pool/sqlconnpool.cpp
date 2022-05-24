@@ -49,6 +49,7 @@ void SqlConnPool::Init(const char *host, int port, const char *user, const char 
     MAX_CONN_ = connSize;
     // 信号量，数量等于MySQL的最大连接数
     // 使用信号量实现多线程争夺连接的同步机制
+    // 信号量的数量等于MySQL的最大连接数，每用一个MySQL连接，信号量数量-1
     sem_init(&semId_, 0, MAX_CONN_);
 }
 
@@ -65,7 +66,7 @@ MYSQL *SqlConnPool::GetConn(void)
         LOG_WARN("SqlConnPool busy!");
         return nullptr;
     }
-    // 等待信号量
+    // 等待信号量。信号量>0，信号量数量-1，若信号量<=0，则阻塞等待
     sem_wait(&semId_);
     {
         lock_guard<mutex> locker(mtx_);
