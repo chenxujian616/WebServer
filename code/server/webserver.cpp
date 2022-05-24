@@ -1,4 +1,5 @@
 #include "webserver.h"
+#include <iostream>
 
 WebServer::WebServer(int port, int trigMode, int timeoutMS, bool OptLinger, int sqlPort,
                      const char *sqlUser, const char *sqlPwd, const char *dbName, int connPoolNum,
@@ -103,12 +104,20 @@ void WebServer::Start(void)
     }
     while (!isClose_)
     {
+        /* while循环中，基本流程是先让epoll内核态监听文件描述符，读取数据
+            读取完后，往工作线程绑定OnRead_方法（此时epoll还是EPOLLIN，还没到EPOLLOUT状态）
+            读取完后，自动调用Client->process()，同时修改epoll当前文件描述符监听信息
+            修改后，再往工作线程绑定OnWrite_方法发送HTTP响应报文（所以说可以随时更改HTTP工作线程的绑定函数吗）
+         */
+
         // timeous=-1表示没有事件处于阻塞状态
         if (timeoutMS_ > 0)
         {
             timeMS = timer_->GetNextTick();
         }
+        // 非阻塞等待文件描述符事件
         int eventCnt = epoller_->Wait(timeMS);
+        // 内核态检测到有文件描述符有事件发生
         for (int i = 0; i < eventCnt; i++)
         {
             // 处理事件
@@ -117,6 +126,7 @@ void WebServer::Start(void)
 
             if (fd == listenFd_)
             {
+                // 监听线程
                 DealListen_();
             }
             else if (events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
@@ -126,11 +136,13 @@ void WebServer::Start(void)
             }
             else if (events & EPOLLIN)
             {
+                // 有文件描述符读入数据
                 assert(users_.count(fd) > 0);
                 DealRead_(&users_[fd]);
             }
             else if (events & EPOLLOUT)
             {
+                // 有文件描述符写出数据
                 assert(users_.count(fd) > 0);
                 DealWrite_(&users_[fd]);
             }
@@ -175,12 +187,17 @@ void WebServer::AddClient_(int fd, sockaddr_in addr)
     {
         timer_->add(fd, timeoutMS_, std::bind(&WebServer::CloseConn_, this, &users_[fd]));
     }
+    // 往epoller中添加文件描述符，使epoll自动监听
     epoller_->AddFd(fd, EPOLLIN | connEvent_);
     // 每一个新的连接都要设为非阻塞模式
     SetFdNonblock(fd);
     LOG_INFO("Client[%d] in!", users_[fd].GetFd());
 }
 
+/**
+ * @brief 处理监听文件描述符
+ *
+ */
 void WebServer::DealListen_(void)
 {
     struct sockaddr_in addr;
@@ -188,6 +205,7 @@ void WebServer::DealListen_(void)
 
     do
     {
+        // 与客户端建立连接
         int fd = accept(listenFd_, (struct sockaddr *)&addr, &len);
         if (fd < 0)
         {
@@ -195,14 +213,21 @@ void WebServer::DealListen_(void)
         }
         else if (HttpConn::userCount >= MAX_FD)
         {
+            // 连接数量超过最大客户端文件描述符数量
             SendError_(fd, "Server busy!");
             LOG_WARN("Clients is full!");
             return;
         }
+        // 服务器接收HTTP请求，此时与客户端浏览器建立TCP连接
         AddClient_(fd, addr);
     } while (listenEvent_ & EPOLLET);
 }
 
+/**
+ * @brief 从HTTP连接对象中读取数据，在HTTP文件描述符有事件发生时调用，从工作线程池中获取线程
+ *
+ * @param client HTTP连接对象指针
+ */
 void WebServer::DealRead_(HttpConn *client)
 {
     assert(client);
@@ -228,6 +253,7 @@ void WebServer::ExtentTime_(HttpConn *client)
 
 void WebServer::OnRead_(HttpConn *client)
 {
+    // OnRead要注意，是先有请求报文后服务器发送响应报文
     assert(client);
     int ret = -1;
     int readErrno = 0;
@@ -244,6 +270,8 @@ void WebServer::OnProcess_(HttpConn *client)
 {
     if (client->process())
     {
+        // 将该文件描述符设为EPOLLOUT状态，这样在while循环时，内核态监听到文件描述符处于EPOLLOUT
+        // 之后就可以调用OnWrite_方法
         epoller_->ModFd(client->GetFd(), connEvent_ | EPOLLOUT);
     }
     else
@@ -279,6 +307,12 @@ void WebServer::OnWrite_(HttpConn *client)
     CloseConn_(client);
 }
 
+/**
+ * @brief 监听文件描述符初始化
+ *
+ * @return true
+ * @return false
+ */
 bool WebServer::InitSocket_(void)
 {
     int ret;
