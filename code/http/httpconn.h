@@ -37,7 +37,9 @@ private:
 
     bool isClose_;
 
+    /* iovCnt_、iov_都是用于writev函数，用于在一次函数调用中写多个非连续缓冲区 */
     int iovCnt_;
+    // 向量元素
     struct iovec iov_[2];
 
     // 读缓冲区

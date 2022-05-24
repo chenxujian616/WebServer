@@ -24,6 +24,7 @@ void HttpConn::Init(int sockFd, const sockaddr_in &addr)
     userCount++;
     addr_ = addr;
     fd_ = sockFd;
+    // 每init一个都会创建一个缓冲区
     writeBuff_.RetrieveAll();
     readBuff_.RetrieveAll();
     isClose_ = false;
@@ -130,8 +131,9 @@ bool HttpConn::process(void)
         response_.Init(srcDir, request_.path(), false, 400);
     }
 
+    // HTTP响应报文（MakeResponse没有添加响应体内容，也没有发送数据）
     response_.MakeResponse(writeBuff_);
-    // 响应头
+    // 响应行、响应头的起始地址和长度
     iov_[0].iov_base = const_cast<char *>(writeBuff_.Peek());
     iov_[0].iov_len = writeBuff_.ReadableBytes();
     iovCnt_ = 1;
