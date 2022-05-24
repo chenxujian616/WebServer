@@ -30,6 +30,7 @@ public:
         FINISH,
     };
 
+    // HTTP请求的处理结果
     enum HTTP_CODE
     {
         NO_REQUEST = 0,
@@ -86,6 +87,12 @@ public:
     ~HttpRequest() = default;
 
     void Init(void);
+    /**
+     * @brief 解析请求报文
+     *
+     * @param buff 请求报文内容
+     * @return true 解析成功；false 解析失败
+     */
     bool parse(Buffer &buff);
 
     std::string path(void) const;
