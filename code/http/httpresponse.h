@@ -13,6 +13,8 @@
 #include "../buffer/buffer.h"
 #include "../log/log.h"
 
+// 和httprequest处理请求报文不同，httpresponse创建响应报文
+
 class HttpResponse
 {
 private:
@@ -29,7 +31,9 @@ private:
     std::string path_;
     std::string srcDir_;
 
+    // 文件在内存中的起始地址
     char *mmFile_;
+    // 文件属性
     struct stat mmFileStat_;
 
     static const std::unordered_map<std::string, std::string> SUFFIX_TYPE;

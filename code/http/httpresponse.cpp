@@ -25,6 +25,7 @@ const unordered_map<std::string, std::string> HttpResponse::SUFFIX_TYPE = {
     {".js", "text/javascript"},
 };
 
+// 状态码
 const std::unordered_map<int, std::string> HttpResponse::CODE_STATUS = {
     {200, "OK"},
     {400, "Bad Request"},
@@ -71,6 +72,7 @@ void HttpResponse::MakeResponse(Buffer &buff)
     // 判断请求的资源文件
     // stat方法获取文件属性，并把属性存到缓存中
     // S_ISDIR宏判断是否为文件。为目录则返回404错误
+    // st_mode是文件对应模式，用状态码判断是否属于文件或目录
     if (stat((srcDir_ + path_).data(), &mmFileStat_) < 0 || S_ISDIR(mmFileStat_.st_mode))
     {
         code_ = 404;
@@ -113,8 +115,10 @@ void HttpResponse::ErrorHtml_(void)
 void HttpResponse::AddStateLine_(Buffer &buff)
 {
     string status;
+    // 状态码存在，不存在返回400状态码
     if (CODE_STATUS.count(code_) == 1)
     {
+        // 如200，status="OK"
         status = CODE_STATUS.find(code_)->second;
     }
     else
@@ -122,6 +126,7 @@ void HttpResponse::AddStateLine_(Buffer &buff)
         code_ = 400;
         status = CODE_STATUS.find(code_)->second;
     }
+    // 添加响应报文响应行
     buff.Append("HTTP/1.1 " + to_string(code_) + " " + status + "\r\n");
 }
 // 添加响应头部信息
@@ -140,6 +145,11 @@ void HttpResponse::AddHeader_(Buffer &buff)
     buff.Append("Content-type: " + GetFileType_() + "\r\n");
 }
 
+/**
+ * @brief 添加响应报文响应体
+ *
+ * @param buff 响应体内容buff
+ */
 void HttpResponse::AddContent_(Buffer &buff)
 {
     // 打开文件
@@ -152,6 +162,8 @@ void HttpResponse::AddContent_(Buffer &buff)
 
     // 将文件映射到内存提高文件的访问速度
     LOG_DEBUG("file path %s", (srcDir_ + path_).c_str());
+    // mmap命令用于将一个文件或对象映射到内存，提高文件的访问速度
+    // PORT_READ表示页内容可以被读取，MAP_PRIVATE表示内存区域的写入不会影响原文件
     int *mmRet = (int *)mmap(0, mmFileStat_.st_size, PROT_READ, MAP_PRIVATE, srcFd, 0);
     if (*mmRet == -1)
     {
