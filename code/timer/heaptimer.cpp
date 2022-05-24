@@ -32,7 +32,7 @@ void HeapTimer::siftup_(size_t i)
 
 /**
  * @brief 交换堆节点方法
- * 
+ *
  * @param i 子节点
  * @param j 父节点
  */
@@ -47,7 +47,7 @@ void HeapTimer::SwapNode_(size_t i, size_t j)
 
 /**
  * @brief 小根堆节点下移方法
- * 
+ *
  * @param index 需要调整的节点索引
  * @param n 小根堆的size，即最后一个元素，不参与堆节点调整
  * @return true 调整后的i比调整前的i大，返回true
@@ -81,11 +81,11 @@ bool HeapTimer::siftdown_(size_t index, size_t n)
 }
 
 /**
- * @brief 添加新节点到小根堆中
- * 
- * @param id 
- * @param timeOut 
- * @param cb 
+ * @brief 添加新节点到小根堆中，时间到了自动调用callback函数
+ *
+ * @param id 文件描述符
+ * @param timeOut 过期时间
+ * @param cb 回调函数
  */
 void HeapTimer::add(int id, int timeOut, const TimeoutCallback &cb)
 {
@@ -179,7 +179,7 @@ void HeapTimer::tick(void)
 
 /**
  * @brief 清除到期节点，这个节点必然是小顶堆的根节点，故索引为0
- * 
+ *
  */
 void HeapTimer::pop(void)
 {
